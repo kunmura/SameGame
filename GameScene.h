@@ -48,7 +48,7 @@ protected:
     void getTouchBlockTag(cocos2d::CCPoint touchPoint, int &tag, kBlock &blockType);
     std::list<int> getSameColorBlockTags(int baseTag, kBlock blockType);
     void removeBlock(std::list<int> blockTags, kBlock blockType);
-    bool hassSameColorBlock(std::list<int> blockTagList, int searchBlockTag);
+    bool hasSameColorBlock(std::list<int> blockTagList, int searchBlockTag);
     
 public:
     virtual bool init();

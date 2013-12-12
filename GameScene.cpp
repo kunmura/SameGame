@@ -55,7 +55,25 @@ bool GameScene::ccTouchBegan(CCTouch* pTouch, CCEvent* pEvent)
 // タッチ終了イベント
 void GameScene::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
 {
-    CCLog("ccTouchEnded");
+    // タップポイント取得
+    CCPoint touchPoint = m_background->convertTouchToNodeSpace(pTouch);
+    
+    // タップしたコマのTagとコマの種類を取得
+    int tag = 0;
+    kBlock blockType;
+    getTouchBlockTag(touchPoint, tag, blockType);
+    
+    if(tag != 0)
+    {
+        // 隣接するコマを検索する
+        list<int> sameColorBlockTags = getSameColorBlockTags(tag, blockType);
+        
+        if( sameColorBlockTags.size() > 1 )
+        {
+            // 隣接するコマを削除する
+            removeBlock(sameColorBlockTags, blockType);
+        }
+    }
 }
 
 // 変数初期化
@@ -138,7 +156,7 @@ void GameScene::getTouchBlockTag(CCPoint touchPoint, int &tag, kBlock &blockType
 }
 
 // コマ配列にあるか検索
-bool GameScene::hassSameColorBlock(list<int> blockTagList, int searchBlockTag)
+bool GameScene::hasSameColorBlock(list<int> blockTagList, int searchBlockTag)
 {
     list<int>::iterator it;
     for (it = blockTagList.begin(); it != blockTagList.end(); ++it)
@@ -172,9 +190,13 @@ list<int> GameScene::getSameColorBlockTags(int baseTag, kBlock blockType)
         for (int i = 0; i < sizeof(tags) / sizeof(tags[0]); i++)
         {
             // すでにリストにあるか検索
-            if (!hassSameColorBlock(sameColorBlockTags, tags[i]))
+            if (!hasSameColorBlock(sameColorBlockTags, tags[i]))
             {
-                sameColorBlockTags.push_back(tags[i]);
+                // コマ配列にあるか検索
+                if (hasSameColorBlock(m_blockTags[blockType], tags[i]))
+                {
+                    sameColorBlockTags.push_back(tags[i]);
+                }
             }
         }
         
@@ -182,4 +204,24 @@ list<int> GameScene::getSameColorBlockTags(int baseTag, kBlock blockType)
     }
     
     return sameColorBlockTags;
+}
+
+// 配列のコマを削除
+void GameScene::removeBlock(list<int> blockTags, kBlock blockType)
+{
+    list<int>::iterator it = blockTags.begin();
+    while (it != blockTags.end())
+    {
+        // 既存配列から該当コマを削除
+        m_blockTags[blockType].remove(*it);
+        
+        // 対象となるコマを取得
+        CCNode* block = m_background->getChildByTag(*it);
+        if(block)
+        {
+            block->removeFromParentAndCleanup(true);
+        }
+        
+        it++;
+    }
 }
