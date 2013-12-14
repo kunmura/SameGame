@@ -34,6 +34,11 @@ void CCPlaySE::update(float time)
     SimpleAudioEngine::sharedEngine()->playEffect(m_sound.c_str());
 }
 
+CCFiniteTimeAction* CCPlaySE::reverse()
+{
+    return (CCFiniteTimeAction*)(CCPlaySE::create(m_sound));
+}
+
 CCObject* CCPlaySE::copyWithZone(CCZone* pZone)
 {
     CCZone* pNewZone = NULL;

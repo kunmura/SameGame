@@ -22,7 +22,7 @@ public:
     virtual CCObject* copyWithZone(cocos2d::CCZone* pZone);
     
 public:
-    static CCPlaySE* create(std::String sound);
+    static CCPlaySE* create(std::string sound);
     
 protected:
     std::string m_sound;

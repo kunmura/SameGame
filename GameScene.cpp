@@ -9,6 +9,7 @@
 #include "GameScene.h"
 #include "SimpleAudioEngine.h"
 #include "BlockSprite.h"
+#include "CCPlaySE.h"
 
 using namespace cocos2d;
 using namespace CocosDenshion;
@@ -206,9 +207,17 @@ list<int> GameScene::getSameColorBlockTags(int baseTag, kBlock blockType)
     return sameColorBlockTags;
 }
 
+// コマの削除
+void GameScene::removingBlock(CCNode* block)
+{
+    block->removeFromParentAndCleanup(true);
+}
+
 // 配列のコマを削除
 void GameScene::removeBlock(list<int> blockTags, kBlock blockType)
 {
+    bool first = true;
+    
     list<int>::iterator it = blockTags.begin();
     while (it != blockTags.end())
     {
@@ -219,7 +228,33 @@ void GameScene::removeBlock(list<int> blockTags, kBlock blockType)
         CCNode* block = m_background->getChildByTag(*it);
         if(block)
         {
-            block->removeFromParentAndCleanup(true);
+            // コマが消えるアニメーションを生成
+            CCScaleTo* scale = CCScaleTo::create(REMOVING_TIME, 0);
+            
+            // コマを削除するアクションを生成
+            CCCallFuncN* func = CCCallFuncN::create(this, callfuncN_selector(GameScene::removingBlock));
+            
+            // アクションを繋げる
+            CCFiniteTimeAction* sequence = CCSequence::create(scale, func, NULL);
+            
+            CCFiniteTimeAction* action;
+            if(first)
+            {
+                // コマが消えるサウンドアクションを生成
+                CCPlaySE* playSe = CCPlaySE::create(MP3_REMOVE_BLOCK);
+                
+                // アクションをつなげる
+                action = CCSpawn::create(sequence, playSe, NULL);
+                
+                first = false;
+            }
+            else
+            {
+                action = sequence;
+            }
+            
+            // アクションをセットする
+            block->runAction(action);
         }
         
         it++;

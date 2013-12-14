@@ -17,6 +17,7 @@
 #define REMOVING_TIME 0.1f
 
 #define PNG_BACKGROUND "background.png"
+#define MP3_REMOVE_BLOCK "se_remove.mp3"
 
 class GameScene : public cocos2d::CCLayer
 {
