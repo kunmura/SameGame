@@ -73,6 +73,9 @@ void GameScene::ccTouchEnded(CCTouch* pTouch, CCEvent* pEvent)
         {
             // 隣接するコマを削除する
             removeBlock(sameColorBlockTags, blockType);
+            
+            // コマ削除後のアニメーション
+            movingBlockAnimation1(sameColorBlockTags);
         }
     }
 }
@@ -86,6 +89,13 @@ void GameScene::initForVariables()
     // コマの一辺の長さを取得
     BlockSprite* pBlock = BlockSprite::createWithBlockType(kBlockRed);
     m_blockSize = pBlock->getContentSize().height;
+    
+    // コマ種類の配列生成
+    blockTypes.push_back(kBlockRed);
+    blockTypes.push_back(kBlockBlue);
+    blockTypes.push_back(kBlockYellow);
+    blockTypes.push_back(kBlockGreen);
+    blockTypes.push_back(kBlockGray);
 }
 
 // show background
@@ -259,4 +269,109 @@ void GameScene::removeBlock(list<int> blockTags, kBlock blockType)
         
         it++;
     }
+}
+
+// コマのインデックス取得
+GameScene::PositionIndex GameScene::getPositionIndex(int tag)
+{
+    int pos1_x = (tag - kTagBaseBlock) / 100;
+    int pos1_y = (tag - kTagBaseBlock) % 100;
+    
+    return PositionIndex(pos1_x, pos1_y);
+}
+
+// 新しい位置をセット
+void GameScene::setNewPosition1(int tag, PositionIndex posIndex)
+{
+    BlockSprite* blockSprite = (BlockSprite*)m_background->getChildByTag(tag);
+    int nextPosY = blockSprite->getNextPosY();
+    if(nextPosY==-1)
+    {
+        nextPosY = posIndex.y;
+    }
+    
+    // 移動先の位置をセット
+    blockSprite->setNextPos(posIndex.x, --nextPosY);
+}
+
+// 消えたコマを埋めるように新しい位置をセット
+void GameScene::searchNewPosition1(list<int> blocks)
+{
+    // 消えるコマ数分のループ
+    list<int>::iterator it1 = blocks.begin();
+    while (it1 != blocks.end())
+    {
+        PositionIndex posIndex1 = getPositionIndex(*it1);
+        
+        // コマ種類のループ
+        vector<kBlock>::iterator it2 = blockTypes.begin();
+        while (it2 != blockTypes.end())
+        {
+            // 各種類のコマ数分ループ
+            list<int>::iterator it3 = m_blockTags[*it2].begin();
+            while (it3 != m_blockTags[*it2].end())
+            {
+                PositionIndex posIndex2 = getPositionIndex(*it3);
+                
+                if(posIndex1.x == posIndex2.x && posIndex1.y < posIndex2.y)
+                {
+                    // 消えるコマの上に位置するコマに対して、移動先の位置をセットする
+                    setNewPosition1(*it3, posIndex2);
+                }
+                
+                it3++;
+            }
+            
+            it2++;
+        }
+        
+        it1++;
+    }
+}
+
+// コマを移動する
+void GameScene::moveBlock()
+{
+    // コマ種類のループ
+    vector<kBlock>::iterator it1 = blockTypes.begin();
+    while (it1 != blockTypes.end())
+    {
+        // 各種類のコマ数分のループ
+        list<int>::iterator it2 = m_blockTags[*it1].begin();
+        while (it2 != m_blockTags[*it1].end())
+        {
+            BlockSprite* blockSprite = (BlockSprite*)m_background->getChildByTag(*it2);
+            int nextPosX = blockSprite->getNextPosX();
+            int nextPosY = blockSprite->getNextPosY();
+            
+            if(nextPosX != -1 || nextPosY != -1)
+            {
+                // 新しいタグをセットする
+                int newTag = getTag(nextPosX, nextPosY);
+                blockSprite->initNextPos();
+                blockSprite->setTag(newTag);
+                
+                // タグ一覧の値も新しいタグに変更する
+                *it2 = newTag;
+                
+                // アニメーションをセットする
+                CCMoveTo* move = CCMoveTo::create(MOVING_TIME, getPosition(nextPosX, nextPosY));
+                blockSprite->runAction(move);
+            }
+            
+            it2++;
+        }
+        
+        it1++;
+    }
+}
+
+// コマ削除後のアニメーション
+void GameScene::movingBlockAnimation1(list<int> blocks)
+{
+    // コマの新しい位置をセットする
+    searchNewPosition1(blocks);
+    
+    // 新しい位置がセットされたコマのアニメーション
+    moveBlock();
 }
